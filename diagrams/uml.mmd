@@ -1,15 +1,54 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
-    %% Keep this file updated so it matches your final implementation.
-
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class Owner {
+        +str name
+        +int available_minutes
+        +time day_start
+        +list~str~ preferences
+        +list~Pet~ pets
+        +add_pet(pet) None
+        +remove_pet(pet) None
+        +get_all_tasks() list~Task~
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class Pet {
+        +str name
+        +str species
+        +int age
+        +list~Task~ tasks
+        +add_task(task) None
+        +remove_task(task) None
+        +get_tasks_due(day) list~Task~
     }
 
-    ClassName --> AnotherClass : relationship
+    class Task {
+        +str title
+        +str category
+        +int duration_minutes
+        +str priority
+        +str frequency
+        +time preferred_time
+        +date last_completed
+        +update(details) None
+        +mark_complete(day) None
+        +is_due(day) bool
+        +priority_rank() int
+    }
+
+    class Scheduler {
+        +Owner owner
+        +date plan_date
+        +list~dict~ planned_items
+        +list~dict~ skipped_items
+        +generate_plan(day) list~dict~
+        +sort_tasks(tasks) list~Task~
+        +fit_tasks(tasks) list~Task~
+        +detect_conflicts() list~str~
+        +total_minutes() int
+        +explain_plan() str
+        +display_plan() str
+    }
+
+    Owner "1" *-- "0..*" Pet : owns
+    Pet "1" *-- "0..*" Task : needs
+    Scheduler "1" --> "1" Owner : plans for
+    Scheduler ..> Task : schedules
