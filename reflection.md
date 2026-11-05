@@ -27,6 +27,13 @@ I first considered a fifth class, `DailyPlan`, to hold the finished schedule. I 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
 
+Yes. I asked my AI assistant to review the class skeleton for missing relationships and logic bottlenecks, and I made four changes based on that review:
+
+- **Added `pet_name` to `Task`:** A flat list of tasks lost track of which pet each one belonged to, so two pets' "Feeding" tasks looked identical in the plan. `Pet` now sets this field when a task is added.
+- **Added `Owner.get_tasks_due(day)`:** Only `Pet` could filter tasks by day, so the scheduler would have had to loop through the pets itself. This keeps that work in `Owner`.
+- **Added `Scheduler.assign_times(tasks)`:** Nothing in the original design gave a task its start time. This method keeps each preferred time and fits the other tasks into free gaps, which also gives `detect_conflicts` real overlaps to find.
+- **Changed `fit_tasks` to return skipped tasks too:** It originally returned only the tasks that fit, so the plan couldn't explain what it left out or why.
+
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
