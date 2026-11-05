@@ -2,10 +2,25 @@
 
 ## 1. System Design
 
+**Core user actions**
+
+1. **Add a pet and owner profile:** The user enters basic information about themselves and their pet, such as the pet's name and species and how much time they have available each day. This gives the planner the context it needs.
+2. **Add and manage care tasks:** The user creates tasks such as walks, feeding, meds, enrichment or grooming, giving each one a duration and priority. They can edit these tasks later as their pet's routine changes.
+3. **Generate and view today's plan:** The user asks for a daily schedule and sees which tasks fit in the time available and in what order. The app also explains its choices, such as why a high-priority task came first or why another task was left out.
+
 **a. Initial design**
 
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
+
+My initial UML has four classes. `Owner` and `Pet` hold the information about who is involved, `Task` describes the care work, and `Scheduler` makes the planning decisions. An owner can have many pets and each pet can have many tasks, so the design supports households with more than one pet. The scheduler keeps a reference to the owner and reaches the tasks through it.
+
+- **Owner:** Stores the owner's name, the time they have available each day, when their day starts and their preferences. It manages the list of pets and gathers tasks across all of them.
+- **Pet:** Stores the pet's name, species, age and care tasks. It adds and removes tasks and reports which ones are due on a given day.
+- **Task:** Represents one care activity, with a title, category, duration, priority, frequency, optional preferred time and the date it was last completed. It can update its own details, record when it was completed, work out whether it is due and convert its priority to a number for sorting.
+- **Scheduler:** Builds the plan for a day. It sorts the tasks, keeps the ones that fit in the available time and checks for conflicts. It also stores the planned and skipped tasks with a reason for each, so it can explain and display the plan.
+
+I first considered a fifth class, `DailyPlan`, to hold the finished schedule. I folded it into `Scheduler` to keep to the four classes the project called for.
 
 **b. Design changes**
 
