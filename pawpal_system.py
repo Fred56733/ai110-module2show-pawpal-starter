@@ -182,6 +182,7 @@ class Scheduler:
         skipped_items = []
 
         def place(task: Task, start: int, reason: str) -> None:
+            """Plan the task at the given start, or skip it if it runs past midnight."""
             end = start + task.duration_minutes
             if end > MINUTES_PER_DAY:
                 skipped_items.append({"task": task, "reason": "Would run past midnight"})
