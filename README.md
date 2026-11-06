@@ -66,19 +66,45 @@ Skipped:
 
 ## 🧪 Testing PawPal+
 
+Run the full test suite from the project folder:
+
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+If your system doesn't have a `python` command, use `python3 -m pytest`.
+
+### What the tests cover
+
+The 42 tests in `tests/test_pawpal.py` cover normal use and edge cases:
+
+| Area | Tests | What they check |
+|------|-------|-----------------|
+| Basics | 2 | Completing a task changes its status, and adding a task increases a pet's task count |
+| Sorting | 6 | Chronological order, untimed tasks last, midnight, same-time ties, an empty list, and priority order |
+| Building a plan | 9 | Priority when time runs out, a pet with no tasks, an owner with no pets, an exact fit, zero available time, repeat runs, and tasks that would run past midnight |
+| Filtering | 6 | By pet, by completion status, by both, an unknown pet, and upcoming tasks not counting as completed |
+| Recurring tasks | 10 | Daily and weekly next dates, copied details, no duplicates, year ends, leap days, and late or early completion |
+| Conflict detection | 9 | Same-time and overlapping tasks for one pet or two, back-to-back tasks, three tasks at once, and skipped tasks |
+
+### Test output
 
 ```
-# Paste your pytest output here
+============================= test session starts ==============================
+platform darwin -- Python 3.9.6, pytest-8.4.2, pluggy-1.6.0
+rootdir: /Users/fred/Documents/VS Code/ai110-module2show-pawpal-starter
+collected 42 items
+
+tests/test_pawpal.py ..........................................          [100%]
+
+============================== 42 passed in 0.03s ==============================
 ```
+
+### Confidence level
+
+⭐⭐⭐⭐☆ (4/5)
+
+All 42 tests pass, and they found three real bugs in the scheduling logic that were then fixed. The rating stops at 4 because the tests only cover `pawpal_system.py`. The Streamlit app isn't covered, and it doesn't use the scheduler yet.
 
 ## 📐 Smarter Scheduling
 
@@ -89,7 +115,7 @@ PawPal+ goes beyond a simple task list with the features below. They live in `pa
 | Task sorting | `Scheduler.sort_by_time()`, `Scheduler.sort_tasks()` | `sort_by_time()` orders tasks by preferred time and puts untimed tasks last. `sort_tasks()` orders by highest priority, then shortest duration, to decide what gets planned first. |
 | Filtering | `Owner.filter_tasks()`, `Scheduler.fit_tasks()` | `filter_tasks()` finds tasks by pet name, completion status, day or any mix of these. `fit_tasks()` skips tasks that don't fit the owner's available time and records why. |
 | Conflict handling | `Scheduler.detect_conflicts()`, `Scheduler.assign_times()` | `assign_times()` keeps preferred times and fits other tasks into free gaps. `detect_conflicts()` returns a warning for each overlap, for the same pet or different pets, without stopping the program. |
-| Recurring tasks | `Scheduler.mark_task_complete()`, `Task.next_occurrence()`, `Task.is_due()` | Completing a daily or weekly task automatically adds a new one, due 1 or 7 days after the day it was completed. Completing a task twice doesn't create a duplicate. |
+| Recurring tasks | `Scheduler.mark_task_complete()`, `Task.next_occurrence()`, `Task.is_due()` | Completing a daily or weekly task automatically adds a new one, due 1 or 7 days after the day it was completed, or after its due date if it was completed early. Completing a task twice doesn't create a duplicate. |
 
 ## 📸 Demo Walkthrough
 

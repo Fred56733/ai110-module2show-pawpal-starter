@@ -20,7 +20,7 @@ def _to_time(minutes: int) -> time:
     return time(minutes // 60, minutes % 60)
 
 
-@dataclass
+@dataclass(eq=False)  # two tasks with the same details are still separate tasks
 class Task:
     """A single pet care activity, such as a walk or a feeding."""
 
@@ -67,9 +67,14 @@ class Task:
         return self.last_completed is not None
 
     def next_occurrence(self, day: date) -> Task:
-        """Return a new unfinished copy of this task, due one interval after the day."""
+        """Return a new unfinished copy of this task, due one interval later.
+
+        The interval counts from the given day, or from the due date if that's later,
+        so a task finished early doesn't come straight back.
+        """
+        start = max(day, self.due_date) if self.due_date else day
         interval = timedelta(days=FREQUENCY_DAYS[self.frequency])
-        return replace(self, due_date=day + interval, last_completed=None)
+        return replace(self, due_date=start + interval, last_completed=None)
 
     def priority_rank(self) -> int:
         """Return this task's priority as a number, where higher is more important."""
@@ -165,10 +170,18 @@ class Scheduler:
     def generate_plan(self, day: date) -> list[dict]:
         """Build and return the plan for the given day, replacing any earlier plan."""
         self.plan_date = day
-        ordered_tasks = self.sort_tasks(self.owner.get_tasks_due(day))
-        fitting_tasks, skipped_for_time = self.fit_tasks(ordered_tasks)
-        self.planned_items, skipped_for_day_end = self.assign_times(fitting_tasks)
-        self.skipped_items = skipped_for_time + skipped_for_day_end
+        candidates = self.sort_tasks(self.owner.get_tasks_due(day))
+        past_midnight = []
+        while True:
+            fitting_tasks, skipped_for_time = self.fit_tasks(candidates)
+            self.planned_items, dropped = self.assign_times(fitting_tasks)
+            if not dropped:
+                break
+            # Refit without these tasks so they don't use up the available time.
+            past_midnight += dropped
+            dropped_tasks = [item["task"] for item in dropped]
+            candidates = [task for task in candidates if task not in dropped_tasks]
+        self.skipped_items = skipped_for_time + past_midnight
         return self.planned_items
 
     def mark_task_complete(self, task: Task, day: date) -> Task | None:
