@@ -88,6 +88,13 @@ During brainstorming, the AI suggested five classes and recommended keeping a se
 
 I verified the AI's work by running it. I checked the terminal output from `main.py`, ran the test suite and tried the app myself. That last step mattered because passing tests didn't mean the app was finished. When I clicked Generate schedule, it still showed a placeholder message, so I asked why and had it connected to the scheduler.
 
+**c. AI strategy**
+
+- **Most effective features:** The most effective features were agent mode editing several files at once, running the code and tests directly in the terminal, and reviewing my skeleton for missing relationships.
+- **A suggestion I rejected or modified:** The AI suggested a separate `DailyPlan` class. I folded it into `Scheduler` to keep to the four classes the project called for, as described in part b.
+- **Separate chat sessions:** I didn't use separate chat sessions. I kept the whole project in one long session and gave the assistant one task at a time. That kept all of my earlier decisions in context, but separate sessions for planning and testing would probably have kept each phase more focused.
+- **Being the lead architect:** Being the lead architect means owning the decisions. The AI can suggest designs and write code quickly, but I had to hold it to the project's requirements, choose the tradeoffs and test the result myself.
+
 ---
 
 ## 4. Testing and Verification
