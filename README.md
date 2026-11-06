@@ -82,14 +82,14 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+PawPal+ goes beyond a simple task list with the features below. They live in `pawpal_system.py` and are demonstrated in `main.py`. The Streamlit app doesn't use them yet.
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Scheduler.sort_by_time()`, `Scheduler.sort_tasks()` | `sort_by_time()` orders tasks by preferred time and puts untimed tasks last. `sort_tasks()` orders by highest priority, then shortest duration, to decide what gets planned first. |
+| Filtering | `Owner.filter_tasks()`, `Scheduler.fit_tasks()` | `filter_tasks()` finds tasks by pet name, completion status, day or any mix of these. `fit_tasks()` skips tasks that don't fit the owner's available time and records why. |
+| Conflict handling | `Scheduler.detect_conflicts()`, `Scheduler.assign_times()` | `assign_times()` keeps preferred times and fits other tasks into free gaps. `detect_conflicts()` returns a warning for each overlap, for the same pet or different pets, without stopping the program. |
+| Recurring tasks | `Scheduler.mark_task_complete()`, `Task.next_occurrence()`, `Task.is_due()` | Completing a daily or weekly task automatically adds a new one, due 1 or 7 days after the day it was completed. Completing a task twice doesn't create a duplicate. |
 
 ## 📸 Demo Walkthrough
 

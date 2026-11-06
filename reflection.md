@@ -48,6 +48,10 @@ Yes. I asked my AI assistant to review the class skeleton for missing relationsh
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
 
+My scheduler warns about conflicts instead of fixing them. When two tasks have preferred times that overlap, it keeps both at their requested times and adds a warning to the plan, rather than moving one of them to a free slot. The downside is that a plan can contain two things the owner can't do at once, so they have to sort that out themselves.
+
+This is reasonable because a preferred time often matters. Medication may need to happen at a specific time, and moving it automatically could be worse than showing a clear warning. The scheduler can't know which task is safe to move, but the owner does. Tasks without a preferred time are still placed in free gaps automatically, so the owner only has to step in when two fixed times clash.
+
 ---
 
 ## 3. AI Collaboration

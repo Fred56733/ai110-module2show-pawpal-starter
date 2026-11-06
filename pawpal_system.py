@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from datetime import date, time
+from datetime import date, time, timedelta
 
 PRIORITY_RANKS = {"low": 1, "medium": 2, "high": 3}
 FREQUENCY_DAYS = {"daily": 1, "weekly": 7}
@@ -32,6 +32,7 @@ class Task:
     preferred_time: time | None = None
     last_completed: date | None = None
     pet_name: str = ""  # set by the Pet that holds this task
+    due_date: date | None = None  # None means it's due straight away
 
     def __post_init__(self) -> None:
         """Reject values the scheduler can't work with."""
@@ -56,11 +57,19 @@ class Task:
         self.last_completed = day
 
     def is_due(self, day: date) -> bool:
-        """Return True if this task needs doing on the given day."""
-        if self.last_completed is None:
-            return True
-        days_since_completed = (day - self.last_completed).days
-        return days_since_completed >= FREQUENCY_DAYS[self.frequency]
+        """Return True if this task is unfinished and has reached its due date."""
+        if self.is_complete():
+            return False
+        return self.due_date is None or day >= self.due_date
+
+    def is_complete(self) -> bool:
+        """Return True if this occurrence of the task has been completed."""
+        return self.last_completed is not None
+
+    def next_occurrence(self, day: date) -> Task:
+        """Return a new unfinished copy of this task, due one interval after the day."""
+        interval = timedelta(days=FREQUENCY_DAYS[self.frequency])
+        return replace(self, due_date=day + interval, last_completed=None)
 
     def priority_rank(self) -> int:
         """Return this task's priority as a number, where higher is more important."""
@@ -121,6 +130,28 @@ class Owner:
         """Return the tasks due on the given day across all of this owner's pets."""
         return [task for pet in self.pets for task in pet.get_tasks_due(day)]
 
+    def filter_tasks(
+        self,
+        pet_name: str | None = None,
+        completed: bool | None = None,
+        day: date | None = None,
+    ) -> list[Task]:
+        """Return the tasks matching the given pet name, status and day.
+
+        A task matches a day if it was completed or is due on that day. Leave a
+        filter as None to ignore it.
+        """
+        tasks = self.get_all_tasks()
+        if pet_name is not None:
+            tasks = [task for task in tasks if task.pet_name == pet_name]
+        if completed is not None:
+            tasks = [task for task in tasks if task.is_complete() == completed]
+        if day is not None:
+            tasks = [
+                task for task in tasks if task.last_completed == day or task.is_due(day)
+            ]
+        return tasks
+
 
 @dataclass
 class Scheduler:
@@ -140,10 +171,36 @@ class Scheduler:
         self.skipped_items = skipped_for_time + skipped_for_day_end
         return self.planned_items
 
+    def mark_task_complete(self, task: Task, day: date) -> Task | None:
+        """Complete the task and add its next occurrence to the same pet.
+
+        Returns the new task, or None if this task was already complete, so that
+        completing it twice can't create a duplicate.
+        """
+        pet = next((pet for pet in self.owner.pets if task in pet.tasks), None)
+        if pet is None:
+            raise ValueError(f"{task.title} doesn't belong to any of this owner's pets")
+        if task.is_complete():
+            return None
+        task.mark_complete(day)
+        next_task = task.next_occurrence(day)
+        pet.add_task(next_task)
+        return next_task
+
     def sort_tasks(self, tasks: list[Task]) -> list[Task]:
         """Return the tasks by highest priority first, then shortest first."""
         return sorted(
             tasks, key=lambda task: (-task.priority_rank(), task.duration_minutes)
+        )
+
+    def sort_by_time(self, tasks: list[Task]) -> list[Task]:
+        """Return the tasks by preferred time, earliest first, with untimed tasks last."""
+        return sorted(
+            tasks,
+            key=lambda task: (
+                task.preferred_time is None,
+                task.preferred_time or time.max,
+            ),
         )
 
     def fit_tasks(self, tasks: list[Task]) -> tuple[list[Task], list[dict]]:
@@ -225,7 +282,7 @@ class Scheduler:
         return start
 
     def detect_conflicts(self) -> list[str]:
-        """Return a description of each overlap between planned items."""
+        """Return a warning for each pair of planned items that overlap in time."""
         items = sorted(self.planned_items, key=lambda item: item["start_time"])
         conflicts = []
         for index, first in enumerate(items):
@@ -234,12 +291,23 @@ class Scheduler:
             for second in items[index + 1:]:
                 if _to_minutes(second["start_time"]) >= first_end:
                     break
-                conflicts.append(
-                    f"{self._label(first['task'])} at {first['start_time']:%H:%M} "
-                    f"overlaps {self._label(second['task'])} "
-                    f"at {second['start_time']:%H:%M}"
-                )
+                conflicts.append(self._conflict_warning(first, second))
         return conflicts
+
+    def _conflict_warning(self, first: dict, second: dict) -> str:
+        """Return a warning describing how two planned items clash."""
+        first_start = f"{first['start_time']:%H:%M}"
+        second_start = f"{second['start_time']:%H:%M}"
+        if first_start == second_start:
+            timing = f"both start at {first_start}"
+        else:
+            timing = f"overlap ({first_start} and {second_start})"
+        same_pet = first["task"].pet_name == second["task"].pet_name
+        pets = "same pet" if same_pet else "different pets"
+        return (
+            f"Warning: {self._label(first['task'])} and "
+            f"{self._label(second['task'])} {timing} [{pets}]"
+        )
 
     def total_minutes(self) -> int:
         """Return the total minutes of all planned items."""
